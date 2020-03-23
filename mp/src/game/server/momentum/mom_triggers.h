@@ -47,7 +47,7 @@ enum TRACK_TYPE
 // CBaseMomentumTrigger
 class CBaseMomentumTrigger : public CBaseTrigger
 {
-public:
+  public:
     DECLARE_CLASS(CBaseMomentumTrigger, CBaseTrigger);
     DECLARE_DATADESC();
 
@@ -58,14 +58,14 @@ public:
     bool ContainsPosition(const Vector &pos) { return CollisionProp()->IsPointInBounds(pos); }
 
     // By default we want to filter out momentum entities that do not pass an inherit track number check.
-    virtual bool PassesTriggerFilters(CBaseEntity* pOther) OVERRIDE;
+    virtual bool PassesTriggerFilters(CBaseEntity *pOther) OVERRIDE;
 
     // Returns this trigger's track number.
     int GetTrackNumber() const { return m_iTrackNumber; }
     void SetTrackNumber(int track) { m_iTrackNumber = track; }
 
-    // Track number signifies what part of the map this trigger is for. 
-    // 0 = main map, > 0 is the bonus number (example: 2 = "Bonus 2"), and 
+    // Track number signifies what part of the map this trigger is for.
+    // 0 = main map, > 0 is the bonus number (example: 2 = "Bonus 2"), and
     // -1 (default) means it applies to all possible overall zones in the map (good for re-using a trigger)
     CNetworkVarForDerived(int, m_iTrackNumber);
 };
@@ -74,7 +74,7 @@ public:
 // This filter checks that the entity (player/ghost/etc) has their current track number as the same as the one set here.
 class CFilterTrackNumber : public CBaseFilter
 {
-public:
+  public:
     DECLARE_CLASS(CFilterTrackNumber, CBaseFilter);
     DECLARE_DATADESC();
 
@@ -83,14 +83,14 @@ public:
 
     bool PassesFilterImpl(CBaseEntity *pCaller, CBaseEntity *pEntity) OVERRIDE;
 
-private:
+  private:
     int m_iTrackNumber;
 };
 
 // Base class for all Zone trigger entities (can be created by zone tools)
 class CBaseMomZoneTrigger : public CBaseMomentumTrigger
 {
-public:
+  public:
     DECLARE_CLASS(CBaseMomZoneTrigger, CBaseMomentumTrigger);
     DECLARE_NETWORKCLASS();
 
@@ -116,17 +116,17 @@ public:
     // Point-based zone editing
     CUtlVector<Vector> m_vecZonePoints;
 
-private:
+  private:
     friend class CMomPointZoneBuilder;
 };
 
 // A zone trigger has a signifying "zone number" used to give the player
-// a sense of progress. Stages (and the Start Trigger) and Checkpoints both extend from this. 
+// a sense of progress. Stages (and the Start Trigger) and Checkpoints both extend from this.
 // The "zone number" is paired with the track number, allowing different tracks
 // to have different zone triggers with either similar or different zone numbers.
 class CTriggerZone : public CBaseMomZoneTrigger
 {
-public:
+  public:
     DECLARE_CLASS(CTriggerZone, CBaseMomZoneTrigger);
     DECLARE_DATADESC();
 
@@ -135,13 +135,13 @@ public:
     void SetZoneNumber(int newZone) { m_iZoneNumber = newZone; }
     int GetZoneNumber() const { return m_iZoneNumber; };
 
-    virtual void OnStartTouch(CBaseEntity* pOther) OVERRIDE;
-    virtual void OnEndTouch(CBaseEntity* pOther) OVERRIDE;
+    virtual void OnStartTouch(CBaseEntity *pOther) OVERRIDE;
+    virtual void OnEndTouch(CBaseEntity *pOther) OVERRIDE;
 
-    virtual bool ToKeyValues(KeyValues* pKvInto) OVERRIDE;
-    virtual bool LoadFromKeyValues(KeyValues* kv) OVERRIDE;
+    virtual bool ToKeyValues(KeyValues *pKvInto) OVERRIDE;
+    virtual bool LoadFromKeyValues(KeyValues *kv) OVERRIDE;
 
-protected:
+  protected:
     // The zone number of this zone. Keep in mind start timer triggers are always zone number 1,
     // while end triggers are typically zone 0. Everything else is meant to be a checkpoint/stage number.
     // See the start trigger for more info. Zone numbers are otherwise 0 by default.
@@ -154,7 +154,7 @@ protected:
 // against runs at certain parts of a linear map.
 class CTriggerCheckpoint : public CTriggerZone
 {
-public:
+  public:
     DECLARE_CLASS(CTriggerCheckpoint, CTriggerZone);
     DECLARE_NETWORKCLASS();
 
@@ -164,16 +164,16 @@ public:
     virtual int GetZoneType() OVERRIDE;
 };
 
-// Stage triggers are used to denote large, strung-together "chunks" of the map, usually 
-// separated by teleports, each with an increasing number. Failing a stage is usually less punishing 
-// than failing in a linear map, as it typically teleports the player back to the stage start (this trigger), 
+// Stage triggers are used to denote large, strung-together "chunks" of the map, usually
+// separated by teleports, each with an increasing number. Failing a stage is usually less punishing
+// than failing in a linear map, as it typically teleports the player back to the stage start (this trigger),
 // rather than the start of the entire map.
 // An important NOTE: the start trigger reserves the stage (zone) number of "1", but does not make a map "Staged".
 // Adding extra stages (starting with zone number 2 and going up) will then make a map's layout "Staged".
 // Another important NOTE: do not mix Checkpoint and Stage triggers for the same Track!
 class CTriggerStage : public CTriggerZone
 {
-public:
+  public:
     DECLARE_CLASS(CTriggerStage, CTriggerZone);
     DECLARE_NETWORKCLASS();
 
@@ -220,6 +220,7 @@ class CTriggerTimerStart : public CTriggerZone
     virtual bool LoadFromKeyValues(KeyValues *zoneKV) OVERRIDE;
 
     int GetZoneType() OVERRIDE;
+
   private:
     QAngle m_angLook;
 
@@ -231,12 +232,12 @@ class CTriggerTimerStart : public CTriggerZone
     int m_iLimitSpeedType;
 };
 
-// The stop trigger is not considered a traditional CTriggerZone, due to it not really segmenting the map or showing progress,
-// but rather, ending the run. It is technically an extension of the last Stage/Checkpoint of the Track.
-// For handling entering this "zone" in events (UI), we therefore just hard-code the zone number to 0.
+// The stop trigger is not considered a traditional CTriggerZone, due to it not really segmenting the map or showing
+// progress, but rather, ending the run. It is technically an extension of the last Stage/Checkpoint of the Track. For
+// handling entering this "zone" in events (UI), we therefore just hard-code the zone number to 0.
 class CTriggerTimerStop : public CTriggerZone
 {
-public:
+  public:
     DECLARE_CLASS(CTriggerTimerStop, CTriggerZone);
     DECLARE_NETWORKCLASS();
 
@@ -254,7 +255,7 @@ class CTriggerMomentumTeleport : public CBaseMomentumTrigger
     DECLARE_CLASS(CTriggerMomentumTeleport, CBaseMomentumTrigger);
     DECLARE_DATADESC();
 
-public:
+  public:
     // This void teleports the touching entity!
     void OnStartTouch(CBaseEntity *) OVERRIDE;
     void OnEndTouch(CBaseEntity *) OVERRIDE;
@@ -271,9 +272,9 @@ public:
     // True if the entity was teleported, else false
     virtual bool DoTeleport(CBaseEntity *pTeleportTo, CBaseEntity *pEntToTeleport);
     // After teleporting, do this code. Base class does nothing.
-    virtual void AfterTeleport(CBaseEntity *pEntTeleported) {};
+    virtual void AfterTeleport(CBaseEntity *pEntTeleported){};
 
-private:
+  private:
     bool m_bResetVelocity;
     bool m_bResetAngles;
     EHANDLE m_hDestinationEnt;
@@ -285,14 +286,14 @@ class CTriggerProgress : public CBaseMomentumTrigger
     DECLARE_CLASS(CTriggerProgress, CBaseMomentumTrigger);
     DECLARE_DATADESC();
 
-public:
+  public:
     void OnStartTouch(CBaseEntity *) OVERRIDE;
     // the following is only used by CFilterCheckpoint
     virtual int GetProgressNumber() const { return m_iProgressNumber; }
     // The following is used by mapzones.cpp
     void SetProgressNumber(int newInt) { m_iProgressNumber = newInt; }
 
-private:
+  private:
     int m_iProgressNumber;
     // Fires when it resets all one hops.
     COutputEvent m_ResetOnehops;
@@ -326,7 +327,7 @@ class CTriggerTeleportProgress : public CTriggerMomentumTeleport
 // if they stay inside the trigger for a given period ("hold" time).
 class CTriggerMultihop : public CTriggerMomentumTeleport
 {
-public:
+  public:
     DECLARE_CLASS(CTriggerMultihop, CTriggerMomentumTeleport);
     DECLARE_DATADESC();
 
@@ -339,7 +340,7 @@ public:
     float GetHoldTeleportTime() const { return m_fMaxHoldSeconds; }
     void SetHoldTeleportTime(const float fHoldTime) { m_fMaxHoldSeconds = fHoldTime; }
 
-protected:
+  protected:
     // The time that the player initially touched the trigger
     CUtlMap<short, float> m_mapOnStartTouchedTimes;
     // Seconds to hold before activating the teleport
@@ -348,7 +349,7 @@ protected:
 
 // Onehop triggers are based on multihop but limit the player to only entering it
 // once, until the player reaches a stage/start/progress/resetonehop trigger.
-// Upon re-entry or staying inside the trigger past the hold time, the player is teleported 
+// Upon re-entry or staying inside the trigger past the hold time, the player is teleported
 // to a valid progress trigger.
 class CTriggerOnehop : public CTriggerMultihop
 {
@@ -385,7 +386,7 @@ class CTriggerResetOnehop : public CBaseMomentumTrigger
 // CTriggerUserInput
 class CTriggerUserInput : public CBaseMomentumTrigger
 {
-public:
+  public:
     DECLARE_CLASS(CTriggerUserInput, CBaseMomentumTrigger);
     DECLARE_DATADESC();
 
@@ -437,7 +438,8 @@ class CTriggerLimitMovement : public CBaseMomentumTrigger
         SF_LIMIT_CROUCH = 1 << 18,  // prevent player from crouching
         SF_LIMIT_BHOP = 1 << 19     // prevent player from bhopping
     };
-private:
+
+  private:
     void ToggleButtons(CMomRunEntity *pEnt, bool bEnable);
 };
 
@@ -494,6 +496,27 @@ class CTriggerMomentumPush : public CBaseMomentumTrigger
     Vector m_vPushDir;
 };
 
+// CTriggerMomentumCatapult
+class CTriggerMomentumCatapult : public CBaseMomentumTrigger
+{
+  public:
+    DECLARE_CLASS(CTriggerMomentumCatapult, CBaseMomentumTrigger);
+    DECLARE_DATADESC();
+
+    //CTriggerMomentumCatapult();
+
+  public:
+    void OnStartTouch(CBaseEntity *) OVERRIDE;
+    void OnSuccessfulTouch(CBaseEntity *);
+
+  private:
+    float m_fPlayerSpeed;
+    int m_iUseExactVelocity;
+    int m_iExactVelocityChoiceType;
+    Vector m_vLaunchDirection;
+    EHANDLE m_hLaunchTarget;
+};
+
 class CTriggerSlide : public CBaseMomentumTrigger
 {
     DECLARE_CLASS(CTriggerSlide, CBaseMomentumTrigger);
@@ -516,7 +539,7 @@ class CTriggerSlide : public CBaseMomentumTrigger
 
 class CTriggerReverseSpeed : public CBaseMomentumTrigger
 {
-public:
+  public:
     DECLARE_CLASS(CTriggerReverseSpeed, CBaseMomentumTrigger);
     DECLARE_DATADESC();
 
@@ -526,7 +549,7 @@ public:
 
     void ReverseSpeed(CBaseEntity *pEntity, bool bIsHorizontal);
 
-private:
+  private:
     bool m_bReverseHorizontalSpeed, m_bReverseVerticalSpeed;
     float m_flInterval;
     bool m_bOnThink;
@@ -535,7 +558,7 @@ private:
 
 class CTriggerSetSpeed : public CBaseMomentumTrigger
 {
-public:
+  public:
     DECLARE_CLASS(CTriggerSetSpeed, CBaseMomentumTrigger);
     DECLARE_DATADESC();
 
@@ -546,7 +569,7 @@ public:
     void Think(void) OVERRIDE;
     void Touch(CBaseEntity *pOther) OVERRIDE;
 
-private:
+  private:
     void CalculateSpeed(CBaseEntity *pOther);
 
     CUtlMap<short, Vector> m_mapCalculatedVelocities;
@@ -662,7 +685,7 @@ class CMomentumMapInfo : public CPointEntity
 
 class CNoGrenadesZone : public CBaseTrigger
 {
-public:
+  public:
     DECLARE_CLASS(CNoGrenadesZone, CBaseTrigger);
 
     ~CNoGrenadesZone();

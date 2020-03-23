@@ -1,14 +1,15 @@
 #include "cbase.h"
 
-#include "mom_triggers.h"
+#include "fmtstr.h"
 #include "in_buttons.h"
+#include "mom_modulecomms.h"
 #include "mom_player_shared.h"
 #include "mom_replay_entity.h"
 #include "mom_system_gamemode.h"
 #include "mom_system_progress.h"
-#include "fmtstr.h"
 #include "mom_timer.h"
-#include "mom_modulecomms.h"
+#include "mom_triggers.h"
+#include "movevars_shared.h"
 
 #include "dt_utlvector_send.h"
 
@@ -16,13 +17,10 @@
 
 // ------------- Base Trigger ------------------------------------
 BEGIN_DATADESC(CBaseMomentumTrigger)
-    DEFINE_KEYFIELD(m_iTrackNumber, FIELD_INTEGER, "track_number")
+DEFINE_KEYFIELD(m_iTrackNumber, FIELD_INTEGER, "track_number")
 END_DATADESC();
 
-CBaseMomentumTrigger::CBaseMomentumTrigger()
-{
-    m_iTrackNumber = TRACK_ALL;
-}
+CBaseMomentumTrigger::CBaseMomentumTrigger() { m_iTrackNumber = TRACK_ALL; }
 
 void CBaseMomentumTrigger::Spawn()
 {
@@ -33,9 +31,9 @@ void CBaseMomentumTrigger::Spawn()
     m_debugOverlays |= (OVERLAY_BBOX_BIT | OVERLAY_TEXT_BIT);
 }
 
-bool CBaseMomentumTrigger::PassesTriggerFilters(CBaseEntity* pOther)
+bool CBaseMomentumTrigger::PassesTriggerFilters(CBaseEntity *pOther)
 {
-    CMomRunEntity *pEnt = dynamic_cast<CMomRunEntity*>(pOther);
+    CMomRunEntity *pEnt = dynamic_cast<CMomRunEntity *>(pOther);
     if (pEnt && pEnt->GetRunEntData())
     {
         if (m_iTrackNumber != TRACK_ALL && pEnt->GetRunEntData()->m_iCurrentTrack != m_iTrackNumber)
@@ -50,13 +48,9 @@ bool CBaseMomentumTrigger::PassesTriggerFilters(CBaseEntity* pOther)
 LINK_ENTITY_TO_CLASS(filter_momentum_track_number, CFilterTrackNumber);
 
 BEGIN_DATADESC(CFilterTrackNumber)
-    DEFINE_KEYFIELD(m_iTrackNumber, FIELD_INTEGER, "track_number"),
-END_DATADESC();
+DEFINE_KEYFIELD(m_iTrackNumber, FIELD_INTEGER, "track_number"), END_DATADESC();
 
-CFilterTrackNumber::CFilterTrackNumber()
-{
-    m_iTrackNumber = -1;
-}
+CFilterTrackNumber::CFilterTrackNumber() { m_iTrackNumber = -1; }
 
 bool CFilterTrackNumber::KeyValue(const char *szKeyName, const char *szValue)
 {
@@ -70,23 +64,22 @@ bool CFilterTrackNumber::KeyValue(const char *szKeyName, const char *szValue)
 
 bool CFilterTrackNumber::PassesFilterImpl(CBaseEntity *pCaller, CBaseEntity *pEntity)
 {
-    CMomRunEntity *pEnt = dynamic_cast<CMomRunEntity*>(pEntity);
+    CMomRunEntity *pEnt = dynamic_cast<CMomRunEntity *>(pEntity);
     return (m_iTrackNumber > -1 && pEnt && pEnt->GetRunEntData()->m_iCurrentTrack == m_iTrackNumber);
 }
 
 // -------------- BaseMomZoneTrigger ------------------------------
 IMPLEMENT_SERVERCLASS_ST(CBaseMomZoneTrigger, DT_BaseMomZoneTrigger)
 SendPropInt(SENDINFO(m_iTrackNumber)),
-SendPropUtlVector(SENDINFO_UTLVECTOR(m_vecZonePoints), 32, SendPropVector(NULL, 0, sizeof(Vector))),
-SendPropFloat(SENDINFO(m_flZoneHeight)),
-END_SEND_TABLE();
+    SendPropUtlVector(SENDINFO_UTLVECTOR(m_vecZonePoints), 32, SendPropVector(NULL, 0, sizeof(Vector))),
+    SendPropFloat(SENDINFO(m_flZoneHeight)), END_SEND_TABLE();
 
 CBaseMomZoneTrigger::CBaseMomZoneTrigger()
 {
     m_iTrackNumber = TRACK_MAIN; // Default zones to the main map.
 }
 
-void CBaseMomZoneTrigger::InitCustomCollision(CPhysCollide* pPhysCollide, const Vector& vecMins, const Vector& vecMaxs)
+void CBaseMomZoneTrigger::InitCustomCollision(CPhysCollide *pPhysCollide, const Vector &vecMins, const Vector &vecMaxs)
 {
     // We are able to create a vphysics object just fine, but how physics work IN vphysics is no good for us.
     // We'll have to use the same method triggers use,
@@ -96,7 +89,7 @@ void CBaseMomZoneTrigger::InitCustomCollision(CPhysCollide* pPhysCollide, const 
     // do a custom collision test.
     // The default collision test only works if the entity is a proper model or brush.
     // In our case, we're neither.
-    objectparams_t params = { 0 };
+    objectparams_t params = {0};
     params.enableCollisions = true;
     params.pGameData = this;
     params.pName = "";
@@ -113,7 +106,6 @@ void CBaseMomZoneTrigger::InitCustomCollision(CPhysCollide* pPhysCollide, const 
     VPhysicsDestroyObject();
     VPhysicsSetObject(pPhys);
 
-
     if (CollisionProp()->GetPartitionHandle() == PARTITION_INVALID_HANDLE)
         CollisionProp()->CreatePartitionHandle();
     SetSolid(SOLID_VPHYSICS);
@@ -122,12 +114,11 @@ void CBaseMomZoneTrigger::InitCustomCollision(CPhysCollide* pPhysCollide, const 
     // The collision bound is used by the partition system.
     SetCollisionBounds(vecMins, vecMaxs);
 
-
     // If we ever need ray testing uncomment this.
     AddSolidFlags(/*FSOLID_CUSTOMRAYTEST |*/ FSOLID_CUSTOMBOXTEST);
 }
 
-bool CBaseMomZoneTrigger::TestCollision(const Ray_t& ray, unsigned mask, trace_t& tr)
+bool CBaseMomZoneTrigger::TestCollision(const Ray_t &ray, unsigned mask, trace_t &tr)
 {
     const auto pPhys = VPhysicsGetObject();
     Assert(pPhys);
@@ -151,14 +142,11 @@ bool CBaseMomZoneTrigger::LoadFromKeyValues(KeyValues *pKvFrom)
     return true;
 }
 
-int CBaseMomZoneTrigger::GetZoneType()
-{
-    return ZONE_TYPE_INVALID;
-}
+int CBaseMomZoneTrigger::GetZoneType() { return ZONE_TYPE_INVALID; }
 
 // --------- CTriggerZone ----------------------------------------------
 BEGIN_DATADESC(CTriggerZone)
-    DEFINE_KEYFIELD(m_iZoneNumber, FIELD_INTEGER, "zone_number")
+DEFINE_KEYFIELD(m_iZoneNumber, FIELD_INTEGER, "zone_number")
 END_DATADESC();
 
 CTriggerZone::CTriggerZone()
@@ -166,31 +154,31 @@ CTriggerZone::CTriggerZone()
     m_iZoneNumber = 0; // 0 by default ("end trigger")
 }
 
-void CTriggerZone::OnStartTouch(CBaseEntity* pOther)
+void CTriggerZone::OnStartTouch(CBaseEntity *pOther)
 {
-    CMomRunEntity *pEnt = dynamic_cast<CMomRunEntity*>(pOther);
+    CMomRunEntity *pEnt = dynamic_cast<CMomRunEntity *>(pOther);
     if (pEnt)
         pEnt->OnZoneEnter(this);
 
     BaseClass::OnStartTouch(pOther);
 }
 
-void CTriggerZone::OnEndTouch(CBaseEntity* pOther)
+void CTriggerZone::OnEndTouch(CBaseEntity *pOther)
 {
-    CMomRunEntity *pEnt = dynamic_cast<CMomRunEntity*>(pOther);
+    CMomRunEntity *pEnt = dynamic_cast<CMomRunEntity *>(pOther);
     if (pEnt)
         pEnt->OnZoneExit(this);
 
     BaseClass::OnEndTouch(pOther);
 }
 
-bool CTriggerZone::ToKeyValues(KeyValues* pKvInto)
+bool CTriggerZone::ToKeyValues(KeyValues *pKvInto)
 {
     pKvInto->SetInt("zoneNum", m_iZoneNumber);
     return BaseClass::ToKeyValues(pKvInto);
 }
 
-bool CTriggerZone::LoadFromKeyValues(KeyValues* kv)
+bool CTriggerZone::LoadFromKeyValues(KeyValues *kv)
 {
     m_iZoneNumber = kv->GetInt("zoneNum", -1);
     if (m_iZoneNumber >= 0 && m_iZoneNumber < MAX_ZONES)
@@ -199,17 +187,13 @@ bool CTriggerZone::LoadFromKeyValues(KeyValues* kv)
     return false;
 }
 
-
 //---------- CTriggerCheckpoint -----------------------------------------------------------
 LINK_ENTITY_TO_CLASS(trigger_momentum_timer_checkpoint, CTriggerCheckpoint);
 
 IMPLEMENT_SERVERCLASS_ST(CTriggerCheckpoint, DT_TriggerCheckpoint)
 END_SEND_TABLE()
 
-int CTriggerCheckpoint::GetZoneType()
-{
-    return ZONE_TYPE_CHECKPOINT;
-}
+int CTriggerCheckpoint::GetZoneType() { return ZONE_TYPE_CHECKPOINT; }
 
 //---------- CTriggerStage -----------------------------------------------------------------
 LINK_ENTITY_TO_CLASS(trigger_momentum_timer_stage, CTriggerStage);
@@ -217,10 +201,7 @@ LINK_ENTITY_TO_CLASS(trigger_momentum_timer_stage, CTriggerStage);
 IMPLEMENT_SERVERCLASS_ST(CTriggerStage, DT_TriggerStage)
 END_SEND_TABLE()
 
-int CTriggerStage::GetZoneType()
-{
-    return ZONE_TYPE_STAGE;
-}
+int CTriggerStage::GetZoneType() { return ZONE_TYPE_STAGE; }
 
 //------------------------------------------------------------------------------------------
 
@@ -228,18 +209,14 @@ int CTriggerStage::GetZoneType()
 LINK_ENTITY_TO_CLASS(trigger_momentum_timer_start, CTriggerTimerStart);
 
 BEGIN_DATADESC(CTriggerTimerStart)
-    DEFINE_KEYFIELD(m_fSpeedLimit, FIELD_FLOAT, "speed_limit"),
-    DEFINE_KEYFIELD(m_angLook, FIELD_VECTOR, "look_angles"),
+DEFINE_KEYFIELD(m_fSpeedLimit, FIELD_FLOAT, "speed_limit"), DEFINE_KEYFIELD(m_angLook, FIELD_VECTOR, "look_angles"),
     DEFINE_KEYFIELD(m_bTimerStartOnJump, FIELD_BOOLEAN, "start_on_jump"),
-    DEFINE_KEYFIELD(m_iLimitSpeedType, FIELD_INTEGER, "speed_limit_type")
-END_DATADESC()
+    DEFINE_KEYFIELD(m_iLimitSpeedType, FIELD_INTEGER, "speed_limit_type") END_DATADESC()
 
-IMPLEMENT_SERVERCLASS_ST(CTriggerTimerStart, DT_TriggerTimerStart)
-END_SEND_TABLE()
+        IMPLEMENT_SERVERCLASS_ST(CTriggerTimerStart, DT_TriggerTimerStart) END_SEND_TABLE()
 
-CTriggerTimerStart::CTriggerTimerStart()
-    : m_angLook(vec3_angle), m_fSpeedLimit(350.0f), m_bTimerStartOnJump(true),
-      m_iLimitSpeedType(SPEED_NORMAL_LIMIT)
+            CTriggerTimerStart::CTriggerTimerStart()
+    : m_angLook(vec3_angle), m_fSpeedLimit(350.0f), m_bTimerStartOnJump(true), m_iLimitSpeedType(SPEED_NORMAL_LIMIT)
 {
     m_iZoneNumber = 1;
 }
@@ -299,10 +276,7 @@ bool CTriggerTimerStart::LoadFromKeyValues(KeyValues *zoneKV)
     return false;
 }
 
-int CTriggerTimerStart::GetZoneType()
-{
-    return ZONE_TYPE_START;
-}
+int CTriggerTimerStart::GetZoneType() { return ZONE_TYPE_START; }
 
 void CTriggerTimerStart::Spawn()
 {
@@ -365,10 +339,7 @@ void CTriggerTimerStop::Spawn()
     BaseClass::Spawn();
 }
 
-int CTriggerTimerStop::GetZoneType()
-{
-    return ZONE_TYPE_STOP;
-}
+int CTriggerTimerStop::GetZoneType() { return ZONE_TYPE_STOP; }
 
 //----------------------------------------------------------------------------------------------
 
@@ -376,11 +347,10 @@ int CTriggerTimerStop::GetZoneType()
 LINK_ENTITY_TO_CLASS(trigger_momentum_teleport, CTriggerMomentumTeleport);
 
 BEGIN_DATADESC(CTriggerMomentumTeleport)
-    DEFINE_KEYFIELD(m_bResetVelocity, FIELD_BOOLEAN, "stop"),
-    DEFINE_KEYFIELD(m_bResetAngles, FIELD_BOOLEAN, "resetang"),
-END_DATADESC()
+DEFINE_KEYFIELD(m_bResetVelocity, FIELD_BOOLEAN, "stop"), DEFINE_KEYFIELD(m_bResetAngles, FIELD_BOOLEAN, "resetang"),
+    END_DATADESC()
 
-void CTriggerMomentumTeleport::OnStartTouch(CBaseEntity *pOther)
+        void CTriggerMomentumTeleport::OnStartTouch(CBaseEntity *pOther)
 {
     BaseClass::OnStartTouch(pOther);
 
@@ -425,9 +395,8 @@ bool CTriggerMomentumTeleport::DoTeleport(CBaseEntity *pTeleportTo, CBaseEntity 
     if (!(pTeleportTo && pEntToTeleport))
         return false;
 
-    pEntToTeleport->Teleport(&pTeleportTo->GetAbsOrigin(),
-                             m_bResetAngles ? &pTeleportTo->GetAbsAngles() : nullptr,
-                     m_bResetVelocity ? &vec3_origin : nullptr);
+    pEntToTeleport->Teleport(&pTeleportTo->GetAbsOrigin(), m_bResetAngles ? &pTeleportTo->GetAbsAngles() : nullptr,
+                             m_bResetVelocity ? &vec3_origin : nullptr);
     AfterTeleport(pEntToTeleport);
     return true;
 }
@@ -436,11 +405,10 @@ bool CTriggerMomentumTeleport::DoTeleport(CBaseEntity *pTeleportTo, CBaseEntity 
 LINK_ENTITY_TO_CLASS(trigger_momentum_progress, CTriggerProgress);
 
 BEGIN_DATADESC(CTriggerProgress)
-    DEFINE_KEYFIELD(m_iProgressNumber, FIELD_INTEGER, "progress_number"),
-    DEFINE_OUTPUT(m_ResetOnehops, "OnResetOnehops")
-END_DATADESC()
+DEFINE_KEYFIELD(m_iProgressNumber, FIELD_INTEGER, "progress_number"),
+    DEFINE_OUTPUT(m_ResetOnehops, "OnResetOnehops") END_DATADESC()
 
-void CTriggerProgress::OnStartTouch(CBaseEntity *pOther)
+        void CTriggerProgress::OnStartTouch(CBaseEntity *pOther)
 {
     BaseClass::OnStartTouch(pOther);
     CMomentumPlayer *pPlayer = ToCMOMPlayer(pOther);
@@ -457,7 +425,7 @@ void CTriggerProgress::OnStartTouch(CBaseEntity *pOther)
 LINK_ENTITY_TO_CLASS(filter_momentum_progress, CFilterProgress);
 
 BEGIN_DATADESC(CFilterProgress)
-    DEFINE_KEYFIELD(m_iProgressNum, FIELD_INTEGER, "progress_check")
+DEFINE_KEYFIELD(m_iProgressNum, FIELD_INTEGER, "progress_check")
 END_DATADESC()
 
 bool CFilterProgress::PassesFilterImpl(CBaseEntity *pCaller, CBaseEntity *pEntity)
@@ -484,13 +452,10 @@ void CTriggerTeleportProgress::OnStartTouch(CBaseEntity *pOther)
 LINK_ENTITY_TO_CLASS(trigger_momentum_multihop, CTriggerMultihop);
 
 BEGIN_DATADESC(CTriggerMultihop)
-    DEFINE_KEYFIELD(m_fMaxHoldSeconds, FIELD_FLOAT, "hold")
+DEFINE_KEYFIELD(m_fMaxHoldSeconds, FIELD_FLOAT, "hold")
 END_DATADESC()
 
-CTriggerMultihop::CTriggerMultihop() : m_fMaxHoldSeconds(0.5f)
-{
-    SetDefLessFunc(m_mapOnStartTouchedTimes);
-}
+CTriggerMultihop::CTriggerMultihop() : m_fMaxHoldSeconds(0.5f) { SetDefLessFunc(m_mapOnStartTouchedTimes); }
 
 void CTriggerMultihop::OnStartTouch(CBaseEntity *pOther)
 {
@@ -518,10 +483,12 @@ void CTriggerMultihop::Think()
         {
             if (m_hTouchingEntities[i]->IsPlayer())
             {
-                const auto pPlayer = static_cast<CMomentumPlayer*>(m_hTouchingEntities[i].Get());
-                if (pPlayer && m_mapOnStartTouchedTimes.IsValidIndex(m_mapOnStartTouchedTimes.Find(pPlayer->entindex())))
+                const auto pPlayer = static_cast<CMomentumPlayer *>(m_hTouchingEntities[i].Get());
+                if (pPlayer &&
+                    m_mapOnStartTouchedTimes.IsValidIndex(m_mapOnStartTouchedTimes.Find(pPlayer->entindex())))
                 {
-                    const auto fEnterTime = m_mapOnStartTouchedTimes[m_mapOnStartTouchedTimes.Find(pPlayer->entindex())];
+                    const auto fEnterTime =
+                        m_mapOnStartTouchedTimes[m_mapOnStartTouchedTimes.Find(pPlayer->entindex())];
                     if (gpGlobals->curtime - fEnterTime >= m_fMaxHoldSeconds)
                     {
                         DoTeleport(pPlayer->GetCurrentProgressTrigger(), pPlayer);
@@ -541,12 +508,10 @@ void CTriggerMultihop::Think()
 LINK_ENTITY_TO_CLASS(trigger_momentum_onehop, CTriggerOnehop);
 
 BEGIN_DATADESC(CTriggerOnehop)
-    DEFINE_OUTPUT(m_hopNoLongerJumpable, "OnHopNoLongerJumpable")
+DEFINE_OUTPUT(m_hopNoLongerJumpable, "OnHopNoLongerJumpable")
 END_DATADESC()
 
-CTriggerOnehop::CTriggerOnehop() : m_bhopNoLongerJumpableFired(false)
-{
-}
+CTriggerOnehop::CTriggerOnehop() : m_bhopNoLongerJumpableFired(false) {}
 
 void CTriggerOnehop::OnStartTouch(CBaseEntity *pOther)
 {
@@ -578,7 +543,7 @@ void CTriggerOnehop::OnStartTouch(CBaseEntity *pOther)
 LINK_ENTITY_TO_CLASS(trigger_momentum_resetonehop, CTriggerResetOnehop);
 
 BEGIN_DATADESC(CTriggerResetOnehop)
-    DEFINE_OUTPUT(m_ResetOnehops, "OnResetOnehops")
+DEFINE_OUTPUT(m_ResetOnehops, "OnResetOnehops")
 END_DATADESC()
 
 void CTriggerResetOnehop::OnStartTouch(CBaseEntity *pOther)
@@ -598,9 +563,7 @@ void CTriggerResetOnehop::OnStartTouch(CBaseEntity *pOther)
 LINK_ENTITY_TO_CLASS(trigger_momentum_userinput, CTriggerUserInput);
 
 BEGIN_DATADESC(CTriggerUserInput)
-    DEFINE_KEYFIELD(m_eKey, FIELD_INTEGER, "lookedkey"),
-    DEFINE_OUTPUT(m_OnKeyPressed, "OnKeyPressed"),
-END_DATADESC();
+DEFINE_KEYFIELD(m_eKey, FIELD_INTEGER, "lookedkey"), DEFINE_OUTPUT(m_OnKeyPressed, "OnKeyPressed"), END_DATADESC();
 
 CTriggerUserInput::CTriggerUserInput()
 {
@@ -682,7 +645,7 @@ void CTriggerUserInput::CheckEnt(CBaseEntity *pOther)
     if (!(pOther && pOther->IsPlayer()))
         return;
 
-    const auto pPlayer = static_cast<CBasePlayer*>(pOther);
+    const auto pPlayer = static_cast<CBasePlayer *>(pOther);
     if (pPlayer && pPlayer->m_nButtons & m_ButtonRep)
     {
         m_OnKeyPressed.FireOutput(pPlayer, this);
@@ -696,7 +659,7 @@ LINK_ENTITY_TO_CLASS(trigger_momentum_limitmovement, CTriggerLimitMovement);
 
 void CTriggerLimitMovement::OnStartTouch(CBaseEntity *pOther)
 {
-    CMomRunEntity *pEnt = dynamic_cast<CMomRunEntity*>(pOther);
+    CMomRunEntity *pEnt = dynamic_cast<CMomRunEntity *>(pOther);
     if (pEnt)
         ToggleButtons(pEnt, false);
 
@@ -705,14 +668,14 @@ void CTriggerLimitMovement::OnStartTouch(CBaseEntity *pOther)
 
 void CTriggerLimitMovement::OnEndTouch(CBaseEntity *pOther)
 {
-    CMomRunEntity *pEnt = dynamic_cast<CMomRunEntity*>(pOther);
+    CMomRunEntity *pEnt = dynamic_cast<CMomRunEntity *>(pOther);
     if (pEnt)
         ToggleButtons(pEnt, true);
 
     BaseClass::OnEndTouch(pOther);
 }
 
-void CTriggerLimitMovement::ToggleButtons(CMomRunEntity* pEnt, bool bEnable)
+void CTriggerLimitMovement::ToggleButtons(CMomRunEntity *pEnt, bool bEnable)
 {
     if (m_spawnflags & SF_LIMIT_FORWARD)
         pEnt->SetButtonsEnabled(IN_FORWARD, bEnable);
@@ -736,12 +699,12 @@ void CTriggerLimitMovement::ToggleButtons(CMomRunEntity* pEnt, bool bEnable)
 LINK_ENTITY_TO_CLASS(func_shootboost, CFuncShootBoost);
 
 BEGIN_DATADESC(CFuncShootBoost)
-    DEFINE_KEYFIELD(m_vPushDir, FIELD_VECTOR, "pushdir"),
-    DEFINE_KEYFIELD(m_fPushForce, FIELD_FLOAT, "force"),
+DEFINE_KEYFIELD(m_vPushDir, FIELD_VECTOR, "pushdir"), DEFINE_KEYFIELD(m_fPushForce, FIELD_FLOAT, "force"),
     DEFINE_KEYFIELD(m_iIncrease, FIELD_INTEGER, "increase"),
-END_DATADESC()
+    END_DATADESC()
 
-CFuncShootBoost::CFuncShootBoost(): m_fPushForce(300.0f), m_iIncrease(4)
+        CFuncShootBoost::CFuncShootBoost()
+    : m_fPushForce(300.0f), m_iIncrease(4)
 {
     m_vPushDir.Init();
 }
@@ -796,7 +759,7 @@ int CFuncShootBoost::OnTakeDamage(const CTakeDamageInfo &info)
         }
         if (m_hEntityCheck.Get())
         {
-            const auto pTrigger = dynamic_cast<CBaseTrigger*>(m_hEntityCheck.Get());
+            const auto pTrigger = dynamic_cast<CBaseTrigger *>(m_hEntityCheck.Get());
             if (pTrigger && pTrigger->IsTouching(pInflictor))
             {
                 pInflictor->SetAbsVelocity(finalVel);
@@ -817,12 +780,11 @@ int CFuncShootBoost::OnTakeDamage(const CTakeDamageInfo &info)
 LINK_ENTITY_TO_CLASS(trigger_momentum_push, CTriggerMomentumPush);
 
 BEGIN_DATADESC(CTriggerMomentumPush)
-    DEFINE_KEYFIELD(m_vPushDir, FIELD_VECTOR, "pushdir"),
-    DEFINE_KEYFIELD(m_fPushForce, FIELD_FLOAT, "force"),
-    DEFINE_KEYFIELD(m_iIncrease, FIELD_INTEGER, "increase")
-END_DATADESC()
+DEFINE_KEYFIELD(m_vPushDir, FIELD_VECTOR, "pushdir"), DEFINE_KEYFIELD(m_fPushForce, FIELD_FLOAT, "force"),
+    DEFINE_KEYFIELD(m_iIncrease, FIELD_INTEGER, "increase") END_DATADESC()
 
-CTriggerMomentumPush::CTriggerMomentumPush(): m_fPushForce(300.0f), m_iIncrease(3)
+        CTriggerMomentumPush::CTriggerMomentumPush()
+    : m_fPushForce(300.0f), m_iIncrease(3)
 {
     m_vPushDir.Init();
 }
@@ -872,6 +834,139 @@ void CTriggerMomentumPush::OnSuccessfulTouch(CBaseEntity *pOther)
         pOther->SetAbsVelocity(finalVel);
     }
 }
+
+//-----------------------------------------------------------------------------------------------
+
+//--------- CTriggerMomentumCatapult -------------------------------------------------------------------
+LINK_ENTITY_TO_CLASS(trigger_momentum_catapult, CTriggerMomentumCatapult);
+
+BEGIN_DATADESC(CTriggerMomentumCatapult)
+DEFINE_KEYFIELD(m_fPlayerSpeed, FIELD_FLOAT, "playerSpeed"),
+    DEFINE_KEYFIELD(m_iUseExactVelocity, FIELD_INTEGER, "useExactVelocity"),
+    DEFINE_KEYFIELD(m_iExactVelocityChoiceType, FIELD_INTEGER, "exactVelocityChoiceType"),
+    DEFINE_KEYFIELD(m_vLaunchDirection, FIELD_VECTOR, "launchDirection"),
+    DEFINE_KEYFIELD(m_target, FIELD_STRING, "launchTarget"),
+    END_DATADESC()
+
+        void CTriggerMomentumCatapult::OnStartTouch(CBaseEntity *pOther)
+{
+    BaseClass::OnStartTouch(pOther);
+    if (pOther && pOther->IsPlayer())
+    {
+        OnSuccessfulTouch(pOther);
+    }
+}
+
+void CTriggerMomentumCatapult::OnSuccessfulTouch(CBaseEntity *pOther)
+{
+    if (pOther)
+    {
+        if (!m_hLaunchTarget.Get())
+        {
+            if (m_target != NULL_STRING)
+                m_hLaunchTarget = gEntList.FindEntityByName(nullptr, m_target, nullptr, pOther, pOther);
+            else
+            {
+                DevWarning("CTriggerMomentumCatapult no target found\n");
+                return;
+            }
+        }
+
+        pOther->SetGroundEntity(NULL);
+
+        Vector vecPlayerOrigin = pOther->GetAbsOrigin();
+
+        // Is there something like this to compensate for eye-height?
+        // vecPlayerOrigin.z += 50.0f;
+
+        if (m_iUseExactVelocity)
+        {
+            // Uses exact trig and gravity
+            // Pro: Has two possibly valid solutions like exact velocity case
+            // Con: Not really actually correct from testing
+
+            Vector vecAbsDifference = m_hLaunchTarget->GetAbsOrigin() - vecPlayerOrigin;
+            Vector vecAbsDifferenceXY = Vector(vecAbsDifference.x, vecAbsDifference.y, 0.0f);
+
+            float fSpeed2 = m_fPlayerSpeed * m_fPlayerSpeed;
+            float fSpeed4 = m_fPlayerSpeed * m_fPlayerSpeed * m_fPlayerSpeed * m_fPlayerSpeed;
+            float fAbsX = vecAbsDifferenceXY.Length();
+            float fAbsZ = vecAbsDifference.z;
+            float fGravity = GetCurrentGravity();
+
+            float fDiscriminant = fSpeed4 - fGravity * (fGravity * fAbsX * fAbsX + 2 * fAbsZ * fSpeed2);
+
+            // Maybe not this but some sanity check ofc
+            if (m_fPlayerSpeed < sqrtf(fGravity * (fAbsZ + vecAbsDifference.Length())))
+            {
+                DevWarning("Not enough speed to reach target.\n");
+            }
+
+            if (fDiscriminant < FLT_EPSILON)
+            {
+                DevWarning("NO SOLUTION\n");
+                return;
+            }
+
+            fDiscriminant = sqrtf(fDiscriminant);
+            float fLowAng = atan2f(fSpeed2 - fDiscriminant, fGravity * fAbsX);
+            float fHighAng = atan2f(fSpeed2 + fDiscriminant, fGravity * fAbsX);
+            float fLaunchAng = 0.0f;
+            switch (m_iExactVelocityChoiceType)
+            {
+            // Best case just uses fLowAng for now
+            case 0:
+            case 1:
+                fLaunchAng = fLowAng;
+                break;
+            case 2:
+                fLaunchAng = fHighAng;
+                break;
+            default:
+                break;
+            }
+
+            Vector fGroundDir = vecAbsDifferenceXY.Normalized();
+            Vector vecVelocity = m_fPlayerSpeed * (fGroundDir * cosf(fLaunchAng) + Vector(0, 0, 1) * sinf(fLaunchAng));
+
+            pOther->SetAbsVelocity(vecVelocity);
+
+            //debugoverlay->AddLineOverlay(pOther->GetAbsOrigin(), pOther->GetAbsOrigin() + vecVelocity, 255, 0, 255, 1, 5);
+        }
+        else
+        {
+            // Calculated from time ignoring grav, then compensating for gravity later ??
+            // Pro: Comes up with one solution like default case
+            // Con: Still not really right from testing
+
+            Vector vecAbsDifference = m_hLaunchTarget->GetAbsOrigin() - vecPlayerOrigin;
+            float fSpeed2 = m_fPlayerSpeed * m_fPlayerSpeed;
+            float fGravity = GetCurrentGravity();
+
+            float fDiscriminant = 4.0f * fSpeed2 * vecAbsDifference.Length() * vecAbsDifference.Length();
+
+            // Maybe not this but some sanity check ofc
+            if (m_fPlayerSpeed < sqrtf(fGravity * (vecAbsDifference.z + vecAbsDifference.Length())))
+            {
+                DevWarning("Not enough speed to reach target.\n");
+            }
+
+
+            fDiscriminant = sqrtf(fDiscriminant);
+            float fTime = 0.5f * (fDiscriminant / fSpeed2);
+
+            Vector vecLaunchVelocity = (vecAbsDifference / fTime);
+
+            Vector vecGravityComp = 0.5 * (fGravity * Vector(0, 0, -1)) * fTime;
+            vecLaunchVelocity -= vecGravityComp;
+
+            pOther->SetAbsVelocity(vecLaunchVelocity);
+            //debugoverlay->AddLineOverlay(pOther->GetAbsOrigin(), pOther->GetAbsOrigin() + vecLaunchVelocity, 0, 0, 255, 1, 5);
+        }
+
+    }
+}
+
 //-----------------------------------------------------------------------------------------------
 
 //--------- CTriggerSlide -------------------------------------------------------------------
@@ -879,16 +974,13 @@ void CTriggerMomentumPush::OnSuccessfulTouch(CBaseEntity *pOther)
 LINK_ENTITY_TO_CLASS(trigger_momentum_slide, CTriggerSlide);
 
 BEGIN_DATADESC(CTriggerSlide)
-    DEFINE_KEYFIELD(m_bStuckOnGround, FIELD_BOOLEAN, "StuckOnGround"),
+DEFINE_KEYFIELD(m_bStuckOnGround, FIELD_BOOLEAN, "StuckOnGround"),
     DEFINE_KEYFIELD(m_bAllowingJump, FIELD_BOOLEAN, "AllowingJump"),
     DEFINE_KEYFIELD(m_bDisableGravity, FIELD_BOOLEAN, "DisableGravity"),
-END_DATADESC()
+    END_DATADESC()
 
-IMPLEMENT_SERVERCLASS_ST(CTriggerSlide, DT_TriggerSlide)
-SendPropBool(SENDINFO(m_bStuckOnGround)),
-SendPropBool(SENDINFO(m_bAllowingJump)),
-SendPropBool(SENDINFO(m_bDisableGravity)),
-END_SEND_TABLE();
+        IMPLEMENT_SERVERCLASS_ST(CTriggerSlide, DT_TriggerSlide) SendPropBool(SENDINFO(m_bStuckOnGround)),
+    SendPropBool(SENDINFO(m_bAllowingJump)), SendPropBool(SENDINFO(m_bDisableGravity)), END_SEND_TABLE();
 
 void CTriggerSlide::OnStartTouch(CBaseEntity *pOther)
 {
@@ -932,13 +1024,12 @@ void CTriggerSlide::OnEndTouch(CBaseEntity *pOther)
 LINK_ENTITY_TO_CLASS(trigger_momentum_reversespeed, CTriggerReverseSpeed);
 
 BEGIN_DATADESC(CTriggerReverseSpeed)
-    DEFINE_KEYFIELD(m_bReverseHorizontalSpeed, FIELD_BOOLEAN, "ReverseHorizontal"),
+DEFINE_KEYFIELD(m_bReverseHorizontalSpeed, FIELD_BOOLEAN, "ReverseHorizontal"),
     DEFINE_KEYFIELD(m_bReverseVerticalSpeed, FIELD_BOOLEAN, "ReverseVertical"),
     DEFINE_KEYFIELD(m_flInterval, FIELD_FLOAT, "Interval"),
-    DEFINE_KEYFIELD(m_bOnThink, FIELD_BOOLEAN, "OnThink")
-END_DATADESC()
+    DEFINE_KEYFIELD(m_bOnThink, FIELD_BOOLEAN, "OnThink") END_DATADESC()
 
-CTriggerReverseSpeed::CTriggerReverseSpeed()
+        CTriggerReverseSpeed::CTriggerReverseSpeed()
 {
     m_bReverseHorizontalSpeed = true;
     m_bReverseVerticalSpeed = true;
@@ -955,7 +1046,7 @@ void CTriggerReverseSpeed::OnStartTouch(CBaseEntity *pOther)
         // Reverse x/y velocity.
         if (m_bReverseHorizontalSpeed)
         {
-            ReverseSpeed(pOther ,true);
+            ReverseSpeed(pOther, true);
         }
 
         // Reverse z velocity.
@@ -981,8 +1072,8 @@ void CTriggerReverseSpeed::Think()
             if (pEnt && pEnt->IsPlayer())
             {
                 // Shall we will use the already calculated vel here, if we recalculate we could be stuck into a trigger
-                // since it will take the new velocity already Reversed? If the interval is high enough it shouldn't matter.
-                // pPlayer->SetAbsVelocity(vecCalculatedVel);
+                // since it will take the new velocity already Reversed? If the interval is high enough it shouldn't
+                // matter. pPlayer->SetAbsVelocity(vecCalculatedVel);
 
                 // Reverse x/y velocity.
                 if (m_bReverseHorizontalSpeed)
@@ -1049,17 +1140,16 @@ void CTriggerReverseSpeed::ReverseSpeed(CBaseEntity *pEntity, bool bIsHorizontal
 LINK_ENTITY_TO_CLASS(trigger_momentum_setspeed, CTriggerSetSpeed);
 
 BEGIN_DATADESC(CTriggerSetSpeed)
-    DEFINE_KEYFIELD(m_bKeepHorizontalSpeed, FIELD_BOOLEAN, "KeepHorizontalSpeed"),
+DEFINE_KEYFIELD(m_bKeepHorizontalSpeed, FIELD_BOOLEAN, "KeepHorizontalSpeed"),
     DEFINE_KEYFIELD(m_bKeepVerticalSpeed, FIELD_BOOLEAN, "KeepVerticalSpeed"),
     DEFINE_KEYFIELD(m_flHorizontalSpeedAmount, FIELD_FLOAT, "HorizontalSpeedAmount"),
     DEFINE_KEYFIELD(m_flVerticalSpeedAmount, FIELD_FLOAT, "VerticalSpeedAmount"),
     DEFINE_KEYFIELD(m_angWishDirection, FIELD_VECTOR, "Direction"),
-    DEFINE_KEYFIELD(m_flInterval, FIELD_FLOAT, "Interval"),
-    DEFINE_KEYFIELD(m_bOnThink, FIELD_BOOLEAN, "OnThink"),
+    DEFINE_KEYFIELD(m_flInterval, FIELD_FLOAT, "Interval"), DEFINE_KEYFIELD(m_bOnThink, FIELD_BOOLEAN, "OnThink"),
     DEFINE_KEYFIELD(m_bEveryTick, FIELD_BOOLEAN, "EveryTick"),
-END_DATADESC()
+    END_DATADESC()
 
-CTriggerSetSpeed::CTriggerSetSpeed()
+        CTriggerSetSpeed::CTriggerSetSpeed()
 {
     SetDefLessFunc(m_mapCalculatedVelocities);
     m_bKeepHorizontalSpeed = false;
@@ -1146,7 +1236,7 @@ void CTriggerSetSpeed::CalculateSpeed(CBaseEntity *pOther)
     // I didn't look much about it, but it's pretty interesting. Gotta investigate.
 
     // Compute velocity direction only from y angle. We ignore these because if the mapper set -90 and 180,
-    // the results on x/y axis velocity direction will be close to 0 and result that the horizontal speed 
+    // the results on x/y axis velocity direction will be close to 0 and result that the horizontal speed
     // amount won't be set correctly.
     // Since vertical speed can be set manually anyway, we can ignore and zero the x and z axis on the angle.
     m_angWishDirection.x = m_angWishDirection.z = 0.0f;
@@ -1178,15 +1268,13 @@ void CTriggerSetSpeed::CalculateSpeed(CBaseEntity *pOther)
 LINK_ENTITY_TO_CLASS(trigger_momentum_speedthreshold, CTriggerSpeedThreshold);
 
 BEGIN_DATADESC(CTriggerSpeedThreshold)
-    DEFINE_KEYFIELD(m_iAboveOrBelow, FIELD_INTEGER, "AboveOrBelow"),
+DEFINE_KEYFIELD(m_iAboveOrBelow, FIELD_INTEGER, "AboveOrBelow"),
     DEFINE_KEYFIELD(m_bVertical, FIELD_BOOLEAN, "Vertical"),
     DEFINE_KEYFIELD(m_bHorizontal, FIELD_BOOLEAN, "Horizontal"),
     DEFINE_KEYFIELD(m_flVerticalSpeed, FIELD_FLOAT, "VerticalSpeed"),
     DEFINE_KEYFIELD(m_flHorizontalSpeed, FIELD_FLOAT, "HorizontalSpeed"),
-    DEFINE_KEYFIELD(m_flInterval, FIELD_FLOAT, "Interval"),
-    DEFINE_KEYFIELD(m_bOnThink, FIELD_BOOLEAN, "OnThink"),
-    DEFINE_OUTPUT(m_OnThresholdEvent, "OnThreshold")
-END_DATADESC();
+    DEFINE_KEYFIELD(m_flInterval, FIELD_FLOAT, "Interval"), DEFINE_KEYFIELD(m_bOnThink, FIELD_BOOLEAN, "OnThink"),
+    DEFINE_OUTPUT(m_OnThresholdEvent, "OnThreshold") END_DATADESC();
 
 CTriggerSpeedThreshold::CTriggerSpeedThreshold()
 {
@@ -1260,12 +1348,10 @@ bool CTriggerSpeedThreshold::CheckSpeedInternal(const float flToCheck, bool bIsH
 LINK_ENTITY_TO_CLASS(func_momentum_brush, CFuncMomentumBrush);
 
 BEGIN_DATADESC(CFuncMomentumBrush)
-    DEFINE_KEYFIELD(m_iWorld, FIELD_INTEGER, "World"),
-    DEFINE_KEYFIELD(m_iStage, FIELD_INTEGER, "Stage"), 
+DEFINE_KEYFIELD(m_iWorld, FIELD_INTEGER, "World"), DEFINE_KEYFIELD(m_iStage, FIELD_INTEGER, "Stage"),
     DEFINE_KEYFIELD(m_iDisabledAlpha, FIELD_CHARACTER, "DisabledAlpha"),
-    DEFINE_KEYFIELD(m_bInverted, FIELD_BOOLEAN, "Invert"),
-    DEFINE_KEYFIELD(m_bDisableUI, FIELD_BOOLEAN, "DisableUI"),
-END_DATADESC();
+    DEFINE_KEYFIELD(m_bInverted, FIELD_BOOLEAN, "Invert"), DEFINE_KEYFIELD(m_bDisableUI, FIELD_BOOLEAN, "DisableUI"),
+    END_DATADESC();
 
 CFuncMomentumBrush::CFuncMomentumBrush()
 {
@@ -1280,7 +1366,7 @@ void CFuncMomentumBrush::Spawn()
 {
     // On spawn, we need to check if this brush should be enabled
 
-    SetMoveType(MOVETYPE_PUSH); // so it doesn't get pushed by anything
+    SetMoveType(MOVETYPE_PUSH);       // so it doesn't get pushed by anything
     SetRenderMode(kRenderTransAlpha); // Allows alpha override
 
     SetSolid(SOLID_BSP); // Seems to have the best collision for standing/jumping (see the bhop block fix system)
@@ -1297,14 +1383,11 @@ void CFuncMomentumBrush::Spawn()
     // If it can't move/go away, it's really part of the world
     if (!GetEntityName() || !m_iParent)
         AddFlag(FL_WORLDBRUSH);
-    
+
     CreateVPhysics();
 }
 
-bool CFuncMomentumBrush::IsOn() const
-{
-    return (m_bInverted ? m_iDisabled != 0 : m_iDisabled == 0);
-}
+bool CFuncMomentumBrush::IsOn() const { return (m_bInverted ? m_iDisabled != 0 : m_iDisabled == 0); }
 
 void CFuncMomentumBrush::TurnOn()
 {
@@ -1317,9 +1400,9 @@ void CFuncMomentumBrush::TurnOn()
         return;*/
 
     if (m_bInverted)
-       AddSolidFlags(FSOLID_NOT_SOLID);
+        AddSolidFlags(FSOLID_NOT_SOLID);
     else
-       RemoveSolidFlags(FSOLID_NOT_SOLID);
+        RemoveSolidFlags(FSOLID_NOT_SOLID);
 
     SetRenderColorA(m_bInverted ? m_iDisabledAlpha : 255);
 
@@ -1333,7 +1416,7 @@ void CFuncMomentumBrush::TurnOff()
         return;
 
     if (m_bInverted)
-        RemoveSolidFlags(FSOLID_NOT_SOLID);    
+        RemoveSolidFlags(FSOLID_NOT_SOLID);
     else
         AddSolidFlags(FSOLID_NOT_SOLID);
 
@@ -1342,7 +1425,7 @@ void CFuncMomentumBrush::TurnOff()
     m_iDisabled = !m_bInverted;
 }
 
-void CFuncMomentumBrush::StartTouch(CBaseEntity* pOther)
+void CFuncMomentumBrush::StartTouch(CBaseEntity *pOther)
 {
     BaseClass::StartTouch(pOther);
     // MOM_TODO: Show a UI that says which stage needs unlocking
@@ -1351,34 +1434,31 @@ void CFuncMomentumBrush::StartTouch(CBaseEntity* pOther)
         if (pOther->IsPlayer())
         {
             if (m_iDisabled)
-                ClientPrint((CBasePlayer*)pOther, HUD_PRINTCENTER, 
+                ClientPrint((CBasePlayer *)pOther, HUD_PRINTCENTER,
                             CFmtStr("Beat Stage %i To Make This Solid!", m_iStage).Get());
         }
     }
 }
 
-void CFuncMomentumBrush::EndTouch(CBaseEntity* pOther)
+void CFuncMomentumBrush::EndTouch(CBaseEntity *pOther)
 {
     BaseClass::EndTouch(pOther);
     // MOM_TODO: Hide the UI
     // if (m_iDisabled && pOther->IsPlayer()) or something
 }
 
-
 LINK_ENTITY_TO_CLASS(filter_momentum_campaign_progress, CFilterCampaignProgress);
 
 BEGIN_DATADESC(CFilterCampaignProgress)
-    DEFINE_KEYFIELD(m_iWorld, FIELD_INTEGER, "World"),
-    DEFINE_KEYFIELD(m_iStage, FIELD_INTEGER, "Stage")
-END_DATADESC()
+DEFINE_KEYFIELD(m_iWorld, FIELD_INTEGER, "World"), DEFINE_KEYFIELD(m_iStage, FIELD_INTEGER, "Stage") END_DATADESC()
 
-CFilterCampaignProgress::CFilterCampaignProgress()
+                                                       CFilterCampaignProgress::CFilterCampaignProgress()
 {
     m_iWorld = -1;
     m_iStage = 0;
 }
 
-bool CFilterCampaignProgress::PassesFilterImpl(CBaseEntity* pCaller, CBaseEntity* pEntity)
+bool CFilterCampaignProgress::PassesFilterImpl(CBaseEntity *pCaller, CBaseEntity *pEntity)
 {
     // So far the only entity that is a player is the local player
     if (pEntity->IsPlayer())
@@ -1391,20 +1471,18 @@ bool CFilterCampaignProgress::PassesFilterImpl(CBaseEntity* pCaller, CBaseEntity
 LINK_ENTITY_TO_CLASS(trigger_momentum_campaign_changelevel, CTriggerCampaignChangelevel);
 
 BEGIN_DATADESC(CTriggerCampaignChangelevel)
-    DEFINE_KEYFIELD(m_iWorld, FIELD_INTEGER, "World"),
-    DEFINE_KEYFIELD(m_iStage, FIELD_INTEGER, "Stage"),
+DEFINE_KEYFIELD(m_iWorld, FIELD_INTEGER, "World"), DEFINE_KEYFIELD(m_iStage, FIELD_INTEGER, "Stage"),
     DEFINE_KEYFIELD(m_iGametype, FIELD_INTEGER, "gametype"),
-    DEFINE_KEYFIELD(m_MapOverride, FIELD_STRING, "map_name_override")
-END_DATADESC()
+    DEFINE_KEYFIELD(m_MapOverride, FIELD_STRING, "map_name_override") END_DATADESC()
 
-CTriggerCampaignChangelevel::CTriggerCampaignChangelevel()
+        CTriggerCampaignChangelevel::CTriggerCampaignChangelevel()
 {
     m_iWorld = -1;
     m_iStage = 0;
     m_iGametype = 0;
 }
 
-void CTriggerCampaignChangelevel::OnStartTouch(CBaseEntity* pOther)
+void CTriggerCampaignChangelevel::OnStartTouch(CBaseEntity *pOther)
 {
     BaseClass::OnStartTouch(pOther);
 
@@ -1422,7 +1500,8 @@ void CTriggerCampaignChangelevel::OnStartTouch(CBaseEntity* pOther)
                 // Otherwise go to a specific world stage
                 const char *pMapPrefix = g_pGameModeSystem->GetGameMode(m_iGametype)->GetMapPrefix();
 
-                engine->ClientCommand(pOther->edict(), CFmtStr("map %sw%i_s%i\n", pMapPrefix, m_iWorld, m_iStage).Get());
+                engine->ClientCommand(pOther->edict(),
+                                      CFmtStr("map %sw%i_s%i\n", pMapPrefix, m_iWorld, m_iStage).Get());
             }
         }
         else
@@ -1433,17 +1512,15 @@ void CTriggerCampaignChangelevel::OnStartTouch(CBaseEntity* pOther)
     }
 }
 
-
 LINK_ENTITY_TO_CLASS(info_momentum_map, CMomentumMapInfo);
 
 BEGIN_DATADESC(CMomentumMapInfo)
-    DEFINE_KEYFIELD(m_iWorld, FIELD_INTEGER, "World"),
-    DEFINE_KEYFIELD(m_iStage, FIELD_INTEGER, "Stage"),
+DEFINE_KEYFIELD(m_iWorld, FIELD_INTEGER, "World"), DEFINE_KEYFIELD(m_iStage, FIELD_INTEGER, "Stage"),
     DEFINE_KEYFIELD(m_iGametype, FIELD_INTEGER, "gametype"),
-    DEFINE_KEYFIELD(m_MapAuthor, FIELD_STRING, "author")
-END_DATADESC()
+    DEFINE_KEYFIELD(m_MapAuthor, FIELD_STRING, "author") END_DATADESC()
 
-CMomentumMapInfo::CMomentumMapInfo(): m_iWorld(-1), m_iStage(0), m_iGametype(0)
+        CMomentumMapInfo::CMomentumMapInfo()
+    : m_iWorld(-1), m_iStage(0), m_iGametype(0)
 {
 }
 
@@ -1464,10 +1541,7 @@ static CUtlVector<CNoGrenadesZone *> s_vecNoGrenadeZones;
 
 LINK_ENTITY_TO_CLASS(func_nogrenades, CNoGrenadesZone);
 
-CNoGrenadesZone::~CNoGrenadesZone()
-{
-    s_vecNoGrenadeZones.FindAndFastRemove(this);
-}
+CNoGrenadesZone::~CNoGrenadesZone() { s_vecNoGrenadeZones.FindAndFastRemove(this); }
 
 void CNoGrenadesZone::Spawn()
 {
@@ -1481,14 +1555,11 @@ void CNoGrenadesZone::Spawn()
     s_vecNoGrenadeZones.AddToTail(this);
 }
 
-void CNoGrenadesZone::Precache()
-{
-    PrecacheModel(NOGRENADE_SPRITE);
-}
+void CNoGrenadesZone::Precache() { PrecacheModel(NOGRENADE_SPRITE); }
 
 bool CNoGrenadesZone::IsInsideNoGrenadesZone(CBaseEntity *pOther)
 {
-    if ( pOther )
+    if (pOther)
     {
         FOR_EACH_VEC(s_vecNoGrenadeZones, i)
         {
